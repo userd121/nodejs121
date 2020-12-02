@@ -1,0 +1,78 @@
+version: 3.0
+
+image: golang:1.7.4
+env:
+  - LANGUAGE=go
+
+stages:
+  - test
+  - build
+  - deploy
+
+test_api:
+  stage: test
+  image: ubuntu:16.04
+  env:
+    - password=admin
+  services:
+    - redis
+    - mysql
+  script:
+    - echo hello
+  pull_request: false
+  only:
+    branches:
+      - master
+    tags: 
+      - v1*
+  except:
+    tags: 
+      - v1.0
+
+test_api2:
+  stage: test
+  env:
+    - password=admin
+  script:
+    - env
+  pull_request: false
+  only:
+    branches:
+      - master
+    tags: 
+      - v1*
+  except:
+    tags: 
+      - v1.0
+
+docker_image:
+  stage: build
+  job_type: image_build
+  dockerfile_path: /Dockerfile
+  build_dir: /
+  build_args:
+    - http_proxy=http://10.0.0.1
+  only:
+    branches:
+      - master
+    tags:
+      - v1
+
+deploy_to_k8s:
+  label: prod-env
+  image: alpine
+  stage: deploy
+  script:
+    - curl http://xxxxx.com:80/deploy
+
+dev-deploy:
+  label: dev-env
+  job_type: DCS_deploy
+  stage: deploy
+  app_name: xxxxxxx
+  cluster_id: tttttttttttt
+  only:
+    branches:
+      - master
+    tags:
+      - v1
